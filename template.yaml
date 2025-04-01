@@ -1,0 +1,126 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: spring-boot-template
+  title: Spring Boot Software Template
+  description: Create a new Spring Boot application
+  tags:
+    - java
+    - springboot
+spec:
+  owner: user:default/team
+  type: service
+
+  parameters:
+    - title: Provide your application details
+      required:
+        - app_code
+        - java_group_name
+        - java_artifact_name
+      properties:
+        app_code:
+          title: App Code
+          type: string
+          description: Unique RBC identifier for the application
+          maxLength: 4
+          pattern: ^[a-zA-Z0-9]+$
+        java_group_name:
+          title: Java Group Name
+          type: string
+          description: Group Name for your application (e.g. com.rbc.lob)
+          pattern: ^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*[a-z0-9_]*$
+        java_artifact_name:
+          title: Java Artifact Name
+          type: string
+          description: Artifact Name for your application (e.g. my-app)
+          pattern: ^[a-zA-Z][a-zA-Z0-9-_]+$
+        description:
+          title: Description
+          type: string
+          description: Explain what this application is for.
+       - title: Configure your runtime
+      required:
+        - java_version
+        - spring_boot_version
+        - spring_cloud_version
+      properties:
+        java_version:
+          title: Java Version
+          type: number
+          enum:
+            - 17
+            - 21
+          default: 21
+        spring_boot_version:
+          title: Spring Boot Version
+          type: string
+          enum:
+            - '3.4.4'
+            - '3.3.10'
+          default: '3.4.4'
+        spring_cloud_version:
+          title: Spring Cloud Version
+          type: string
+          enum:
+            - '2024.0.1'
+            - '2023.0.5'
+          default: '2024.0.1'
+      dependencies:
+        spring_boot_version:
+          allOf:
+            - if:
+                not:
+                  properties:
+                    spring_boot_version:
+                      enum:
+                        - 3.4.4
+              then:
+                properties:
+                  spring_cloud_version:
+                    enum:
+                      - '2023.0.5'
+        java_version:
+          allOf:
+            - if:
+                properties:
+                  java_version:
+                    enum:
+                      - 17
+                      - 21
+                  spring_boot_version:
+                    enum:
+                      - '3.3.10'
+  steps:
+    - id: template
+      name: Fetch Template
+      action: fetch:template
+      input:
+        url: ./
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          java_version: ${{ parameters.java_version }}
+
+    - id: publish
+      name: Publish
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: ${{ parameters.description }}
+        repoUrl: github.com?owner=${{ parameters.owner }}&repo=${{ parameters.component_id }}
+
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
+
+  output:
+    links:
+      - title: Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }} 
