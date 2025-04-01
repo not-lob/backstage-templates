@@ -38,7 +38,7 @@ spec:
           title: Description
           type: string
           description: Explain what this application is for.
-       - title: Configure your runtime
+    - title: Configure your runtime
       required:
         - java_version
         - spring_boot_version
