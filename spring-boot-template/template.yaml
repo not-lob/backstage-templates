@@ -90,6 +90,11 @@ spec:
                   spring_boot_version:
                     enum:
                       - '3.3.10'
+              then:
+                properties:
+                  spring_cloud_version:
+                    enum:
+                      - '2023.0.5'
   steps:
     - id: template
       name: Fetch Template
